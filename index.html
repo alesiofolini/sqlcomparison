@@ -1,0 +1,196 @@
+<html>
+<head>
+<title>compare queries</title>
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+
+<style>
+table {
+  border-spacing: 0;
+  width: 100%;
+  border: 1px solid #ddd;
+  table-layout: fixed;
+  word-wrap: break-word;
+}
+
+th {
+  cursor: pointer;
+}
+
+th, td {
+  text-align: left;
+  padding: 16px;
+  word-break: break-all;
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2
+}
+</style>
+</head>
+<body style="padding:20">
+<h1>- compare queries -</h1>
+<section class="container">
+<div class="row">
+<textarea class="col-4" id="querytocast1" placeholder="insert query 1" rows="10"></textarea>
+<button class="col-4" onclick="comparequeries()" type="button" class="nes-btn is-success">compare</button>
+<textarea class="col-4" id="querytocast2" placeholder="insert query 2" rows="10"></textarea>
+</div>
+<br/>
+<div class="row">
+<div class="col-sm-6">
+<table id="tabla1" class="table table-responsive table-bordered table-striped table-sm">
+  <tr>
+   <!--When a header is clicked, run the sortTable function, with a parameter, 0 for sorting by names, 1 for sorting by country:-->  
+    <th onclick="sortTable(0,'tabla1')" style="width:50%;">source (click to order)</th>
+    <th onclick="sortTable(1,'tabla1')" style="width:50%;">target (click to order)</th>
+  </tr>
+</table>
+</div>
+<div class="col-sm-6">
+<table id="tabla2" class="table table-responsive table-bordered table-striped table-sm">
+  <tr>
+   <!--When a header is clicked, run the sortTable function, with a parameter, 0 for sorting by names, 1 for sorting by country:-->  
+    <th onclick="sortTable(0,'tabla2')" style="width:50%;">source (click to order)</th>
+    <th onclick="sortTable(1,'tabla2')" style="width:50%;">target (click to order)</th>
+  </tr>
+</table>
+</div>
+</div>
+</section>
+<script>
+var tabla1 = document.getElementById("tabla1")
+var tabla2 = document.getElementById("tabla2")
+
+var wordstoremove = ['cast(',' as bigint)',' as bit)',' as char(1))',' as date)',' as datetime)',' as datetime2(6))',' as decimal(17,2))',' as decimal(17,6))',
+					' as decimal(17,10))',' as float)',' as int)',' as nchar(2))',' as nchar(8))',' as nvarchar(-1))',' as nvarchar(200))',' as nvarchar(510))',
+					' as nvarchar(1000))',' as nvarchar(255))',' as nvarchar(100))',' as smallint)',' as tinyint)',' as varchar(15))',' as varchar(20))',' as varchar(55))',
+					' as varchar(100))',' as varchar(155))',' as varchar(255))',' as varchar(555))',' as varchar(200))',' as varchar(50))',' as nchar(1))',
+					' as varchar(2))',' as char(3))',' as varchar(10))', ' as varchar(4))',' as nvarchar',' as decimal(17, 2))',' as decimal(17, 6))']
+
+var comparequeries = function(){
+	var querytocast1 = document.getElementById("querytocast1").value.toLowerCase()
+	var querytocast2 = document.getElementById("querytocast2").value.toLowerCase()
+	for(var i = 0; i<wordstoremove.length; i++){
+		querytocast1 = querytocast1.split(wordstoremove[i]).join('')
+		querytocast2 = querytocast2.split(wordstoremove[i]).join('')
+	}
+	querytocast1 = querytocast1.replace(/\t/g, " ")
+	querytocast1 = querytocast1.replace(/ AS /g, " as ")
+	querytocast1 = querytocast1.replace(/, \n/g, ',\n')
+	querytocast1 = querytocast1.replace(/,\n/g, " as ")
+	querytocast2 = querytocast2.replace(/\t/g, " ")
+	querytocast2 = querytocast2.replace(/ AS /g, " as ")
+	querytocast2 = querytocast2.replace(/, \n/g, ',\n')
+	querytocast2 = querytocast2.replace(/,\n/g, " as ")
+	var targetfields1 = []
+	var source1 = []
+	var targetfields2 = []
+	var source2 = []
+	var casts = []
+	var splittedquery1 = querytocast1.split(" as ")
+	var splittedquery2 = querytocast2.split(" as ")
+	for(var i = 0; i<splittedquery1.length; i++){
+		if (i == 0 || i%2==0){
+			//PAR. Estos son los sources.
+			source1.push(splittedquery1[i].trim())
+		}
+		else{
+			targetfields1.push(splittedquery1[i].trim())
+		}
+	}
+	
+	for(var i = 0; i<splittedquery2.length; i++){
+		if (i == 0 || i%2==0){
+			//PAR. Estos son los sources.
+			source2.push(splittedquery2[i].trim())
+		}
+		else{
+			targetfields2.push(splittedquery2[i].trim())
+		}
+	}
+	
+	for(var i = 0; i<source1.length; i++){
+		var ind = targetfields2.indexOf(targetfields1[i])
+		if(targetfields1[i]==targetfields2[ind]&&source1[i]==source2[ind]){
+			tabla1.innerHTML += "<tr><td width=\"50%\">"+source1[i]+"</td><td width=\"50%\">"+targetfields1[i]+"</td></tr>"
+		}
+		else{
+			tabla1.innerHTML += "<tr style=\"background-color:red\"><td width=\"50%\">"+source1[i]+"</td><td width=\"50%\">"+targetfields1[i]+"</td></tr>"
+		}
+	}
+	
+	for(var i = 0; i<source2.length; i++){
+		var ind = targetfields1.indexOf(targetfields2[i])
+		if(targetfields2[i]==targetfields1[ind]&&source2[i]==source1[ind]){
+			tabla2.innerHTML += "<tr><td width=\"50%\">"+source2[i]+"</td><td width=\"50%\">"+targetfields2[i]+"</td></tr>"
+		}
+		else{
+			tabla2.innerHTML += "<tr style=\"background-color:red\"><td width=\"50%\">"+source2[i]+"</td><td width=\"50%\">"+targetfields2[i]+"</td></tr>"
+		}
+	}
+};
+
+function sortTable(n,tabla) {
+  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+  table = document.getElementById(tabla);
+  switching = true;
+  //Set the sorting direction to ascending:
+  dir = "asc"; 
+  /*Make a loop that will continue until
+  no switching has been done:*/
+  while (switching) {
+    //start by saying: no switching is done:
+    switching = false;
+    rows = table.rows;
+    /*Loop through all table rows (except the
+    first, which contains table headers):*/
+    for (i = 1; i < (rows.length - 1); i++) {
+      //start by saying there should be no switching:
+      shouldSwitch = false;
+      /*Get the two elements you want to compare,
+      one from current row and one from the next:*/
+      x = rows[i].getElementsByTagName("TD")[n];
+      y = rows[i + 1].getElementsByTagName("TD")[n];
+      /*check if the two rows should switch place,
+      based on the direction, asc or desc:*/
+      if (dir == "asc") {
+        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+          //if so, mark as a switch and break the loop:
+          shouldSwitch= true;
+          break;
+        }
+      } else if (dir == "desc") {
+        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+          //if so, mark as a switch and break the loop:
+          shouldSwitch = true;
+          break;
+        }
+      }
+    }
+    if (shouldSwitch) {
+      /*If a switch has been marked, make the switch
+      and mark that a switch has been done:*/
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+      //Each time a switch is done, increase this count by 1:
+      switchcount ++;      
+    } else {
+      /*If no switching has been done AND the direction is "asc",
+      set the direction to "desc" and run the while loop again.*/
+      if (switchcount == 0 && dir == "asc") {
+        dir = "desc";
+        switching = true;
+      }
+    }
+  }
+}
+//Pendiente:
+//Sacar coma al final de todo (2)
+//Excluir filas comentadas (3)
+//EOMONTH, SUBSTRING, CASE, ELSE, END, etc. y Palabras hardcodeadas que queden en mayuscula
+
+</script>
+</body>
+</html>
